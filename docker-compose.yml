@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    healthcheck:
+      test: exit 0
+    ports:
+     - 5432:5432
+    environment:
+      - POSTGRES_DB=mx_schedule
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    volumes:
+        - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    
+  mx_scheduler_react:
+    build: .
+    image: ahrohn92/maintainer-app:1.0
+    command: npm start
+    environment:
+      - DATABASE_URL=postgres://admin:admin@db:5432
+      - NODE_ENV=test
+    depends_on:
+      - server
+    ports:
+      - 2004:3000
+
+  server:
+    build: .
+    image: ahrohn92/maintainer-api:1.0
+    command: npm start
+    environment:
+      - DATABASE_URL=postgres://admin:admin@db:5432
+      - NODE_ENV=test
+    depends_on:
+      - db
+    links:
+      - db
+    ports:
+      - 8084:8084
